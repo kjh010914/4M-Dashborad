@@ -50,7 +50,7 @@ if menu == "📱 현장 변동점 등록":
                     "라인": selected_line,
                     "4M구분": m_category.split(" ")[0],
                     "변동내용": change_detail,
-                    "입력자(작업자)": worker_name,
+                    "작업자": worker_name,
                     "품질내역": quality_issue,
                     "유효성점검": validity_check.split(" ")[0]
                 }])
