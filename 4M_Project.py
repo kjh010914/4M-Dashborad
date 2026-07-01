@@ -6,7 +6,7 @@ from streamlit_gsheets import GSheetsConnection
 
 st.set_page_config(page_title="현장 4M 관리", layout="wide")
 
-# --- 1. 구글 스프레드시트 연결 (탭 이름: 4M-Dashboard) ---
+# --- 1. 구글 스프레드시트 연결 ---
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 def load_data():
@@ -14,7 +14,7 @@ def load_data():
     df = df.dropna(how="all") 
     return df
 
-# --- 2. QR코드 파라미터 ---
+# --- 3. 기본 세팅 ---
 query_params = st.query_params
 qr_line = query_params.get("line", "전체")
 lines_list = ["Line-A", "Line-B", "Line-C", "Line-D"]
@@ -22,17 +22,15 @@ lines_list = ["Line-A", "Line-B", "Line-C", "Line-D"]
 st.sidebar.title("🏭 사내 4M 관리 시스템")
 menu = st.sidebar.radio("메뉴", ["📱 현장 변동점 등록", "🖥️ PC 실시간 대시보드", "✏️ 등록 데이터 수정/삭제"])
 
-# --- 3. 현장 변동점 등록 화면 ---
+# --- 4. 현장 변동점 등록 화면 ---
 if menu == "📱 현장 변동점 등록":
     st.header("📱 4M 변동점 현장 입력")
     
     with st.form(key="input_form", clear_on_submit=True):
-        # 🌟 날짜와 시간을 직접 선택할 수 있는 기능 추가
         col_date, col_time = st.columns(2)
         with col_date:
             selected_date = st.date_input("📅 발생 일자", value=datetime.today())
         with col_time:
-            # 기본값은 현재 시간으로 세팅하되, 사용자가 수정 가능
             selected_time = st.time_input("⏰ 발생 시간", value=datetime.now().time())
             
         st.markdown("---")
@@ -42,21 +40,19 @@ if menu == "📱 현장 변동점 등록":
         m_category = st.radio("🔍 4M 구분", ["Man (작업자)", "Machine (설비)", "Material (원재료)", "Method (작업방법)"], horizontal=True)
         
         change_detail = st.text_area("📝 변동 내용 상세")
-        action_taken = st.text_area("🛠️ 조치 내용") # 🌟 새로 추가된 조치내용
+        action_taken = st.text_area("🛠️ 조치 내용")
         
         st.markdown("---")
         st.markdown("👤 **등록자 정보**")
         col_dept, col_name = st.columns(2)
         with col_dept:
-            department = st.text_input("🏢 부서", placeholder="예: 생산팀") # 🌟 흐름글씨 적용
+            department = st.text_input("🏢 부서", placeholder="예: 생산팀")
         with col_name:
-            worker_name = st.text_input("🧑‍💼 담당자 성명", placeholder="예: 홍길동") # 🌟 흐름글씨 적용
+            worker_name = st.text_input("🧑‍💼 담당자 성명", placeholder="예: 홍길동")
         
         st.markdown("---")
         quality_issue = st.text_area("⚠️ 품질 내역")
         validity_check = st.radio("✅ 유효성 점검 결과", ["점검 전", "양호 (문제없음)", "불량 (개선필요)"], horizontal=True)
-        
-        uploaded_file = st.file_uploader("📸 현장 사진 첨부", type=["png", "jpg", "jpeg"]) # 🌟 사진 첨부 기능 추가
         
         submit = st.form_submit_button(label="🚀 변동사항 등록")
         
@@ -65,10 +61,7 @@ if menu == "📱 현장 변동점 등록":
                 st.error("⚠️ 변동 내용과 등록자 정보(부서, 성명)를 모두 작성해주세요.")
             else:
                 df_log = load_data()
-                
-                # 선택한 날짜와 시간을 조합하여 저장
                 custom_datetime = f"{selected_date} {selected_time.strftime('%H:%M:%S')}"
-                photo_status = uploaded_file.name if uploaded_file is not None else "첨부 안됨"
                 
                 new_row = pd.DataFrame([{
                     "일시": custom_datetime,
@@ -79,15 +72,14 @@ if menu == "📱 현장 변동점 등록":
                     "부서": department,
                     "담당자": worker_name,
                     "품질내역": quality_issue,
-                    "유효성점검": validity_check.split(" ")[0],
-                    "사진": photo_status
+                    "유효성점검": validity_check.split(" ")[0]
                 }])
                 df_log = pd.concat([df_log, new_row], ignore_index=True)
                 
                 conn.update(worksheet="4M-Dashboard", data=df_log)
-                st.success(f"✅ [{selected_line}] {custom_datetime} 기준으로 구글 시트에 등록 완료!")
+                st.success(f"✅ [{selected_line}] 구글 시트에 완벽하게 등록되었습니다!")
 
-# --- 4. PC 실시간 대시보드 화면 ---
+# --- 5. PC 실시간 대시보드 화면 ---
 elif menu == "🖥️ PC 실시간 대시보드":
     st.header("🖥️ 4M 변동점 실시간 대시보드")
     
@@ -132,18 +124,19 @@ elif menu == "🖥️ PC 실시간 대시보드":
                 st.plotly_chart(fig2, use_container_width=True)
             
             st.subheader("📋 변동 이력 상세내역 (최신순)")
-            display_df = filtered_df.copy()
-            display_df['일시'] = display_df['일시'].dt.strftime("%Y-%m-%d %H:%M:%S")
-            st.dataframe(display_df.iloc[::-1], use_container_width=True)
-            
-            st.download_button(
-                label="📥 현재 데이터 엑셀(CSV) 다운로드",
+        display_df = filtered_df.copy()
+        display_df['일시'] = display_df['일시'].dt.strftime("%Y-%m-%d %H:%M:%S")
+        
+        st.dataframe(display_df.iloc[::-1], use_container_width=True)
+        
+        st.download_button(
+            label="📥 현재 데이터 엑셀(CSV) 다운로드",
                 data=display_df.to_csv(index=False).encode("utf-8-sig"),
                 file_name=f"4M_Data_Google_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv"
             )
 
-# --- 5. 데이터 수정 및 삭제 화면 ---
+# --- 6. 데이터 수정 및 삭제 화면 ---
 elif menu == "✏️ 등록 데이터 수정/삭제":
     st.header("✏️ 등록 데이터 수정 및 삭제")
     admin_password = st.text_input("🔒 관리자 비밀번호를 입력하세요 ", type="password")
