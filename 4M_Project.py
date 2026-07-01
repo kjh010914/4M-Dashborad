@@ -2,19 +2,18 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import datetime, timedelta
-import os
+from streamlit_gsheets import GSheetsConnection
 
 st.set_page_config(page_title="현장 4M 관리", layout="wide")
 
-# --- 1. 자체 엑셀(CSV) 파일 설정 ---
-DB_FILE = "4m_data_log.csv"
+# --- 1. 구글 스프레드시트 연결 (탭 이름: 4M-Dashboard) ---
+conn = st.connection("gsheets", type=GSheetsConnection)
 
 def load_data():
-    if not os.path.exists(DB_FILE):
-        df = pd.DataFrame(columns=["일시", "라인", "4M구분", "변동내용", "작업자", "품질내역", "유효성점검"])
-        df.to_csv(DB_FILE, index=False, encoding="utf-8-sig")
-        return df
-    return pd.read_csv(DB_FILE)
+    # worksheet 이름을 "4M-Dashboard"로 매칭
+    df = conn.read(worksheet="4M-Dashboard", ttl=0)
+    df = df.dropna(how="all") 
+    return df
 
 # --- 2. QR코드 파라미터 ---
 query_params = st.query_params
@@ -56,8 +55,10 @@ if menu == "📱 현장 변동점 등록":
                     "유효성점검": validity_check.split(" ")[0]
                 }])
                 df_log = pd.concat([df_log, new_row], ignore_index=True)
-                df_log.to_csv(DB_FILE, index=False, encoding="utf-8-sig")
-                st.success(f"✅ [{selected_line}] 자체 데이터베이스에 등록 완료!")
+                
+                # 바뀐 탭 이름으로 데이터 업데이트
+                conn.update(worksheet="4M-Dashboard", data=df_log)
+                st.success(f"✅ [{selected_line}] 구글 스프레드시트에 영구 등록 완료!")
 
 # --- 4. PC 실시간 대시보드 화면 ---
 elif menu == "🖥️ PC 실시간 대시보드":
@@ -111,23 +112,24 @@ elif menu == "🖥️ PC 실시간 대시보드":
             st.download_button(
                 label="📥 현재 데이터 엑셀(CSV) 다운로드",
                 data=display_df.to_csv(index=False, encoding="utf-8-sig"),
-                file_name=f"4M_Data_{datetime.now().strftime('%Y%m%d')}.csv",
+                file_name=f"4M_Data_Google_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv"
             )
 
 # --- 5. 데이터 수정 및 삭제 화면 ---
 elif menu == "✏️ 등록 데이터 수정/삭제":
     st.header("✏️ 등록 데이터 수정 및 삭제")
-    admin_password = st.text_input("🔒 관리자 비밀번호를 입력하세요 ", type="password")
+    admin_password = st.text_input("🔒 관리자 비밀번호를 입력하세요 (기본: 1234)", type="password")
     
-    if admin_password == "0701":
+    if admin_password == "1234":
         df_log = load_data()
         if df_log.empty or len(df_log) == 0:
             st.warning("수정할 데이터가 없습니다.")
         else:
             edited_df = st.data_editor(df_log, num_rows="dynamic", use_container_width=True)
-            if st.button("💾 수정한 내용을 저장하기"):
-                edited_df.to_csv(DB_FILE, index=False, encoding="utf-8-sig")
-                st.success("✅ 자체 엑셀(CSV)에 성공적으로 덮어쓰기 완료되었습니다!")
+            if st.button("💾 수정한 내용을 구글 시트에 저장하기"):
+                # 바뀐 탭 이름으로 저장 업데이트
+                conn.update(worksheet="4M-Dashboard", data=edited_df)
+                st.success("✅ 구글 스프레드시트에 성공적으로 덮어쓰기 완료되었습니다!")
     elif admin_password != "":
         st.error("❌ 비밀번호가 틀렸습니다.")
