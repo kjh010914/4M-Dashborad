@@ -40,17 +40,17 @@ if menu == "📱 현장 변동점 등록":
         m_category = st.radio("🔍 4M 구분", ["Man (작업자)", "Machine (설비)", "Material (원재료)", "Method (작업방법)"], horizontal=True)
         
         change_detail = st.text_area("📝 변동 내용 상세")
-        action_taken = st.text_area("🛠️ 조치 내용")
         
         st.markdown("---")
         st.markdown("👤 **등록자 정보**")
         col_dept, col_name = st.columns(2)
         with col_dept:
-            department = st.text_input("🏢 부서", placeholder="예: 생산팀")
+            department = st.text_input("🏢 부서", placeholder="예: 생산1팀")
         with col_name:
             worker_name = st.text_input("🧑‍💼 담당자 성명", placeholder="예: 홍길동")
         
         st.markdown("---")
+        action_taken = st.text_area("🛠️ 조치 내용")
         quality_issue = st.text_area("⚠️ 품질 내역")
         validity_check = st.radio("✅ 유효성 점검 결과", ["점검 전", "양호 (문제없음)", "불량 (개선필요)"], horizontal=True)
         
