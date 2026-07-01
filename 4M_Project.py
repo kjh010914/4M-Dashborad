@@ -119,9 +119,9 @@ elif menu == "🖥️ PC 실시간 대시보드":
 # --- 5. 데이터 수정 및 삭제 화면 ---
 elif menu == "✏️ 등록 데이터 수정/삭제":
     st.header("✏️ 등록 데이터 수정 및 삭제")
-    admin_password = st.text_input("🔒 관리자 비밀번호를 입력하세요 (기본: 1234)", type="password")
+    admin_password = st.text_input("🔒 관리자 비밀번호를 입력하세요 ", type="password")
     
-    if admin_password == "1234":
+    if admin_password == "0701":
         df_log = load_data()
         if df_log.empty or len(df_log) == 0:
             st.warning("수정할 데이터가 없습니다.")
