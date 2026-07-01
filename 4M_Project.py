@@ -133,9 +133,9 @@ elif menu == "✏️ 등록 데이터 수정/삭제":
     st.header("✏️ 등록 데이터 수정 및 삭제")
 
     # 비밀번호 입력창 (기본 비밀번호: 1234)
-    admin_password = st.text_input("🔒 관리자 비밀번호를 입력하세요 (기본: 1234)", type="password")
+    admin_password = st.text_input("🔒 관리자 비밀번호를 입력하세요", type="password")
 
-    if admin_password == "1234":
+    if admin_password == "0701":
         st.info("💡 수정: 표의 칸을 더블클릭하여 내용을 수정하세요.\n\n💡 삭제: 지우고 싶은 줄의 맨 왼쪽 빈칸을 체크한 뒤, 표 우측 상단의 휴지통(🗑️) 아이콘을 누르세요.")
 
         df_log = load_data()
