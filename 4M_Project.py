@@ -40,32 +40,47 @@ if menu == "📱 현장 변동점 등록":
         default_idx = lines_list.index(qr_line) if qr_line in lines_list else 0
         selected_line = st.selectbox("📍 변동 발생 라인", lines_list, index=default_idx)
         m_category = st.radio("🔍 4M 구분", ["Man (작업자)", "Machine (설비)", "Material (원재료)", "Method (작업방법)"], horizontal=True)
+        
         change_detail = st.text_area("📝 변동 내용 상세")
-        worker_name = st.text_input("👤 입력자(작업자)")
+        action_taken = st.text_area("🛠️ 조치 내용") # 🌟 새로 추가된 조치내용
+        
+        st.markdown("---")
+        st.markdown("👤 **등록자 정보**")
+        col_dept, col_name = st.columns(2)
+        with col_dept:
+            department = st.text_input("🏢 부서", placeholder="예: 생산1팀") # 🌟 흐름글씨 적용
+        with col_name:
+            worker_name = st.text_input("🧑‍💼 담당자 성명", placeholder="예: 홍길동") # 🌟 흐름글씨 적용
         
         st.markdown("---")
         quality_issue = st.text_area("⚠️ 품질 내역")
         validity_check = st.radio("✅ 유효성 점검 결과", ["점검 전", "양호 (문제없음)", "불량 (개선필요)"], horizontal=True)
         
+        uploaded_file = st.file_uploader("📸 현장 사진 첨부", type=["png", "jpg", "jpeg"]) # 🌟 사진 첨부 기능 추가
+        
         submit = st.form_submit_button(label="🚀 변동사항 등록")
         
         if submit:
-            if not change_detail or not worker_name:
-                st.error("⚠️ 변동 내용과 입력자를 모두 작성해주세요.")
+            if not change_detail or not department or not worker_name:
+                st.error("⚠️ 변동 내용과 등록자 정보(부서, 성명)를 모두 작성해주세요.")
             else:
                 df_log = load_data()
                 
-                # 🌟 선택한 날짜와 시간을 조합하여 저장
+                # 선택한 날짜와 시간을 조합하여 저장
                 custom_datetime = f"{selected_date} {selected_time.strftime('%H:%M:%S')}"
+                photo_status = uploaded_file.name if uploaded_file is not None else "첨부 안됨"
                 
                 new_row = pd.DataFrame([{
                     "일시": custom_datetime,
                     "라인": selected_line,
                     "4M구분": m_category.split(" ")[0],
                     "변동내용": change_detail,
-                    "작업자": worker_name,
+                    "조치내용": action_taken,
+                    "부서": department,
+                    "담당자": worker_name,
                     "품질내역": quality_issue,
-                    "유효성점검": validity_check.split(" ")[0]
+                    "유효성점검": validity_check.split(" ")[0],
+                    "사진": photo_status
                 }])
                 df_log = pd.concat([df_log, new_row], ignore_index=True)
                 
@@ -121,7 +136,6 @@ elif menu == "🖥️ PC 실시간 대시보드":
             display_df['일시'] = display_df['일시'].dt.strftime("%Y-%m-%d %H:%M:%S")
             st.dataframe(display_df.iloc[::-1], use_container_width=True)
             
-            # 🌟 한글 깨짐 방지 다운로드 버튼 적용
             st.download_button(
                 label="📥 현재 데이터 엑셀(CSV) 다운로드",
                 data=display_df.to_csv(index=False).encode("utf-8-sig"),
