@@ -111,11 +111,10 @@ elif menu == "🖥️ PC 실시간 대시보드":
             
             st.download_button(
                 label="📥 현재 데이터 엑셀(CSV) 다운로드",
-                data=display_df.to_csv(index=False, encoding="utf-8-sig"),
+                data=display_df.to_csv(index=False).encode("utf-8-sig"),
                 file_name=f"4M_Data_Google_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv"
             )
-
 # --- 5. 데이터 수정 및 삭제 화면 ---
 elif menu == "✏️ 등록 데이터 수정/삭제":
     st.header("✏️ 등록 데이터 수정 및 삭제")
