@@ -49,7 +49,7 @@ if menu == "📱 현장 변동점 등록":
         st.markdown("👤 **등록자 정보**")
         col_dept, col_name = st.columns(2)
         with col_dept:
-            department = st.text_input("🏢 부서", placeholder="예: 생산1팀")
+            department = st.text_input("🏢 부서", placeholder="예: 생산팀")
         with col_name:
             worker_name = st.text_input("🧑‍💼 담당자 성명", placeholder="예: 홍길동")
         
