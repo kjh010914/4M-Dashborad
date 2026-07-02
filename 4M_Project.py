@@ -3,17 +3,11 @@ import pandas as pd
 import plotly.express as px
 from datetime import datetime, timedelta, timezone
 from streamlit_gsheets import GSheetsConnection
-import requests
-import base64
 
 st.set_page_config(page_title="현장 4M 관리", layout="wide")
 
-# 🚨 여기에 ImgBB에서 발급받은 API 키를 넣어주세요! (따옴표는 지우지 마세요)
-IMGBB_API_KEY = "여기에_IMGBB_API_키를_넣으세요"
-
-# 🌟 강제 한국 시간(KST) 계산 함수
-def get_kst_now():
-    return datetime.utcnow() + timedelta(hours=9)
+# 🌟 한국 시간(KST) 설정 (스트림릿 클라우드 서버 시간 차이 9시간 보정)
+KST = timezone(timedelta(hours=9))
 
 # --- 1. 구글 스프레드시트 연결 ---
 conn = st.connection("gsheets", type=GSheetsConnection)
@@ -22,23 +16,6 @@ def load_data():
     df = conn.read(worksheet="4M-Dashboard", ttl=0)
     df = df.dropna(how="all") 
     return df
-
-# --- 📸 2. 이미지 업로드 함수 ---
-def upload_image_to_imgbb(uploaded_file):
-    try:
-        url = "https://api.imgbb.com/1/upload"
-        payload = {
-            "key": IMGBB_API_KEY,
-            "image": base64.b64encode(uploaded_file.getvalue()).decode("utf-8")
-        }
-        res = requests.post(url, data=payload)
-        
-        if res.status_code == 200:
-            return res.json()["data"]["url"] # 다이렉트 이미지 주소 반환
-        else:
-            return "업로드 실패"
-    except Exception as e:
-        return "에러 발생"
 
 # --- 3. 기본 세팅 ---
 query_params = st.query_params
@@ -55,15 +32,15 @@ if menu == "📱 현장 변동점 등록":
     with st.form(key="input_form", clear_on_submit=True):
         col_date, col_time = st.columns(2)
         with col_date:
-            selected_date = st.date_input("📅 발생 일자", value=get_kst_now().date())
+            selected_date = st.date_input("📅 발생 일자", value=datetime.now(KST).date())
         with col_time:
-            selected_time = st.time_input("⏰ 발생 시간", value=get_kst_now().time())
+            selected_time = st.time_input("⏰ 발생 시간", value=datetime.now(KST).time())
             
         st.markdown("---")
         
         default_idx = lines_list.index(qr_line) if qr_line in lines_list else 0
         selected_line = st.selectbox("📍 변동 발생 라인", lines_list, index=default_idx)
-        m_category = st.radio("🔍 4M 구분", ["Man (작업자)", "Machine (설비)", "Material (원재료)", "Method (작업방법)"], horizontal=True)
+        m_category = st.radio("🔍 4M 구분", ["Man (작업자)", "Machine (설비)", "Material (원재료/부품)", "Method (작업방법)"], horizontal=True)
         
         change_detail = st.text_area("📝 변동 내용 상세")
         quality_issue = st.text_area("⚠️ 품질 내역")
@@ -72,16 +49,13 @@ if menu == "📱 현장 변동점 등록":
         st.markdown("👤 **등록자 정보**")
         col_dept, col_name = st.columns(2)
         with col_dept:
-            department = st.text_input("🏢 부서", placeholder="예: 생산1팀")
+            department = st.text_input("🏢 부서", placeholder="예: 생산팀")
         with col_name:
             worker_name = st.text_input("🧑‍💼 담당자 성명", placeholder="예: 홍길동")
         
         st.markdown("---")
         action_taken = st.text_area("🛠️ 조치 내용")
         validity_check = st.radio("✅ 유효성 점검 결과", ["점검 전", "양호 (문제없음)", "불량 (개선필요)"], horizontal=True)
-        
-        # 📸 현장 사진 첨부란 부활
-        uploaded_file = st.file_uploader("📸 현장 사진 첨부 (선택)", type=["png", "jpg", "jpeg"])
         
         submit = st.form_submit_button(label="🚀 변동사항 등록")
         
@@ -92,11 +66,6 @@ if menu == "📱 현장 변동점 등록":
                 df_log = load_data()
                 custom_datetime = f"{selected_date} {selected_time.strftime('%H:%M:%S')}"
                 
-                photo_link = None
-                if uploaded_file is not None:
-                    with st.spinner("📸 사진을 최적화하여 업로드 중입니다..."):
-                        photo_link = upload_image_to_imgbb(uploaded_file)
-                
                 new_row = pd.DataFrame([{
                     "일시": custom_datetime,
                     "라인": selected_line,
@@ -106,8 +75,7 @@ if menu == "📱 현장 변동점 등록":
                     "부서": department,
                     "담당자": worker_name,
                     "품질내역": quality_issue,
-                    "유효성점검": validity_check.split(" ")[0],
-                    "사진": photo_link # 이미지 주소가 저장됨
+                    "유효성점검": validity_check.split(" ")[0]
                 }])
                 df_log = pd.concat([df_log, new_row], ignore_index=True)
                 
@@ -128,8 +96,8 @@ elif menu == "🖥️ PC 실시간 대시보드":
         st.subheader("🔍 데이터 필터링")
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
-            start_date = st.date_input("📅 시작일", value=get_kst_now().date() - timedelta(days=7))
-            end_date = st.date_input("📅 종료일", value=get_kst_now().date())
+            start_date = st.date_input("📅 시작일", value=datetime.now(KST).date() - timedelta(days=7))
+            end_date = st.date_input("📅 종료일", value=datetime.now(KST).date())
         with col_f2:
             filter_default = qr_line if qr_line in lines_list else "전체"
             filter_line = st.selectbox("📍 라인 선택", ["전체"] + lines_list, index=(["전체"] + lines_list).index(filter_default))
@@ -163,30 +131,22 @@ elif menu == "🖥️ PC 실시간 대시보드":
             display_df = filtered_df.copy()
             display_df['일시'] = display_df['일시'].dt.strftime("%Y-%m-%d %H:%M:%S")
             
-            # 🌟 대시보드 표 안에 사진이 직접 보이도록 렌더링(마법 설정)
-            st.dataframe(
-                display_df.iloc[::-1], 
-                use_container_width=True,
-                column_config={
-                    "사진": st.column_config.ImageColumn(
-                        "📸 현장 사진 (미리보기)", help="사진이 등록된 경우 표 안에 나타납니다."
-                    )
-                }
-            )
+            
+            st.dataframe(display_df.iloc[::-1], use_container_width=True)
             
             st.download_button(
                 label="📥 현재 데이터 엑셀(CSV) 다운로드",
                 data=display_df.to_csv(index=False).encode("utf-8-sig"),
-                file_name=f"4M_Data_Google_{get_kst_now().strftime('%Y%m%d')}.csv",
+                file_name=f"4M_Data_Google_{datetime.now(KST).strftime('%Y%m%d')}.csv",
                 mime="text/csv"
             )
 
 # --- 6. 데이터 수정 및 삭제 화면 ---
 elif menu == "✏️ 등록 데이터 수정/삭제":
     st.header("✏️ 등록 데이터 수정 및 삭제")
-    admin_password = st.text_input("🔒 관리자 비밀번호를 입력하세요 (기본: 1234)", type="password")
+    admin_password = st.text_input("🔒 관리자 비밀번호를 입력하세요 ", type="password")
     
-    if admin_password == "1234":
+    if admin_password == "0701":
         df_log = load_data()
         if df_log.empty or len(df_log) == 0:
             st.warning("수정할 데이터가 없습니다.")
