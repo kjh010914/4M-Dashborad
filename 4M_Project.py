@@ -46,7 +46,7 @@ if menu == "📱 현장 변동점 등록":
         st.markdown("👤 **등록자 정보**")
         col_dept, col_name = st.columns(2)
         with col_dept:
-            department = st.text_input("🏢 부서", placeholder="예: 생산팀")
+            department = st.text_input("🏢 부서", placeholder="예: 생산1팀")
         with col_name:
             worker_name = st.text_input("🧑‍💼 담당자 성명", placeholder="예: 홍길동")
         
@@ -124,15 +124,17 @@ elif menu == "🖥️ PC 실시간 대시보드":
                 st.plotly_chart(fig2, use_container_width=True)
             
             st.subheader("📋 변동 이력 상세내역 (최신순)")
-        display_df = filtered_df.copy()
-        display_df['일시'] = display_df['일시'].dt.strftime("%Y-%m-%d %H:%M:%S")
-        
-        st.dataframe(display_df.iloc[::-1], use_container_width=True)
-        
-        st.download_button(
-            label="📥 현재 데이터 엑셀(CSV) 다운로드",
+            
+            display_df = filtered_df.copy()
+            display_df['일시'] = display_df['일시'].dt.strftime("%Y-%m-%d %H:%M:%S")
+
+            
+            st.dataframe(display_df.iloc[::-1], use_container_width=True)
+            
+            st.download_button(
+                label="📥 현재 데이터 엑셀(CSV) 다운로드",
                 data=display_df.to_csv(index=False).encode("utf-8-sig"),
-                file_name=f"4M_Data_Google_{datetime.now().strftime('%Y%m%d')}.csv",
+                file_name=f"4M_Data_Google_{datetime.now(KST).strftime('%Y%m%d')}.csv",
                 mime="text/csv"
             )
 
