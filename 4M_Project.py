@@ -40,7 +40,7 @@ if menu == "📱 현장 변동점 등록":
         
         default_idx = lines_list.index(qr_line) if qr_line in lines_list else 0
         selected_line = st.selectbox("📍 변동 발생 라인", lines_list, index=default_idx)
-        m_category = st.radio("🔍 4M 구분", ["Man (작업자)", "Machine (설비)", "Material (원재료)", "Method (작업방법)"], horizontal=True)
+        m_category = st.radio("🔍 4M 구분", ["Man (작업자)", "Machine (설비)", "Material (원재료/부품)", "Method (작업방법)"], horizontal=True)
         
         change_detail = st.text_area("📝 변동 내용 상세")
         quality_issue = st.text_area("⚠️ 품질 내역")
