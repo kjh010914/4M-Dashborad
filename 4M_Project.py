@@ -20,7 +20,7 @@ def load_data():
 # --- 3. 기본 세팅 ---
 query_params = st.query_params
 qr_line = query_params.get("line", "전체")
-lines_list = ["Line-A", "Line-B", "Line-C", "Line-D"]
+lines_list = ["GN7 PE 조립", "사출", "성형", "DN8 P/TRAY"]
 
 st.sidebar.title("🏭 사내 4M 관리 시스템")
 menu = st.sidebar.radio("메뉴", ["📱 현장 변동점 등록", "🖥️ PC 실시간 대시보드", "✏️ 등록 데이터 수정/삭제"])
