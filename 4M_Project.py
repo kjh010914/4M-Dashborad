@@ -1,10 +1,13 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from streamlit_gsheets import GSheetsConnection
 
 st.set_page_config(page_title="현장 4M 관리", layout="wide")
+
+# 🌟 한국 시간(KST) 설정 (스트림릿 클라우드 서버 시간 차이 9시간 보정)
+KST = timezone(timedelta(hours=9))
 
 # --- 1. 구글 스프레드시트 연결 ---
 conn = st.connection("gsheets", type=GSheetsConnection)
@@ -29,9 +32,9 @@ if menu == "📱 현장 변동점 등록":
     with st.form(key="input_form", clear_on_submit=True):
         col_date, col_time = st.columns(2)
         with col_date:
-            selected_date = st.date_input("📅 발생 일자", value=datetime.today())
+            selected_date = st.date_input("📅 발생 일자", value=datetime.now(KST).date())
         with col_time:
-            selected_time = st.time_input("⏰ 발생 시간", value=datetime.now().time())
+            selected_time = st.time_input("⏰ 발생 시간", value=datetime.now(KST).time())
             
         st.markdown("---")
         
@@ -93,8 +96,8 @@ elif menu == "🖥️ PC 실시간 대시보드":
         st.subheader("🔍 데이터 필터링")
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
-            start_date = st.date_input("📅 시작일", value=datetime.today() - timedelta(days=7))
-            end_date = st.date_input("📅 종료일", value=datetime.today())
+            start_date = st.date_input("📅 시작일", value=datetime.now(KST).date() - timedelta(days=7))
+            end_date = st.date_input("📅 종료일", value=datetime.now(KST).date())
         with col_f2:
             filter_default = qr_line if qr_line in lines_list else "전체"
             filter_line = st.selectbox("📍 라인 선택", ["전체"] + lines_list, index=(["전체"] + lines_list).index(filter_default))
@@ -127,7 +130,7 @@ elif menu == "🖥️ PC 실시간 대시보드":
             
             display_df = filtered_df.copy()
             display_df['일시'] = display_df['일시'].dt.strftime("%Y-%m-%d %H:%M:%S")
-
+            
             
             st.dataframe(display_df.iloc[::-1], use_container_width=True)
             
