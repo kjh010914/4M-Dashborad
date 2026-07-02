@@ -9,7 +9,7 @@ import base64
 st.set_page_config(page_title="현장 4M 관리", layout="wide")
 
 # 🚨 여기에 ImgBB에서 발급받은 API 키를 넣어주세요! (따옴표는 지우지 마세요)
-IMGBB_API_KEY = "여기에_IMGBB_API_키를_넣으세요"
+IMGBB_API_KEY = "6b9a062af8bd375db7bc90ef2bc9f2fb"
 
 # 🌟 강제 한국 시간(KST) 계산 함수
 def get_kst_now():
